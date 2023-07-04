@@ -8,6 +8,12 @@ datasource db {
 }
 
 model Product {
-  id   Int     @id @default(autoincrement())
-  name String?
+  id           Int      @id @default(autoincrement())
+  link         String
+  imageUrl     String
+  name         String
+  store        String
+  interval     Int
+  orderedPrice Int
+  createdAt    DateTime @default(now())
 }

@@ -1,8 +1,103 @@
 import { parse } from "node-html-parser";
+import { prisma } from "../../app/api/_base";
 import { AJIO_PRODUCT_ENDPOINT, STORE } from "../../config/constants";
 import Utils from "../../utils/utils";
+import { Product } from "../models/product_model";
 
 export default class ProductRepository {
+  static async getProductDetails({
+    link,
+    store,
+  }: {
+    link: string;
+    store: STORE;
+  }) {
+    try {
+      let productDetails = { name: "", imageUrl: "" };
+
+      switch (store) {
+        case STORE.FLIPKART:
+          productDetails = await this.getFlipkartProductDetails({ link });
+
+          break;
+
+        case STORE.AMAZON:
+          productDetails = await this.getAmazonProductDetails({ link });
+
+          break;
+
+        case STORE.AJIO:
+          productDetails = await this.getAjioProductDetails({ link });
+
+          break;
+
+        default:
+          break;
+      }
+
+      if (productDetails.name === "") {
+        throw new Error("Failed to fetch the details of product");
+      }
+
+      return { status: true, data: productDetails };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
+
+  static async getFlipkartProductDetails({ link }: { link: string }) {
+    const res = await fetch(link);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch the product");
+    }
+
+    const html = await res.text();
+
+    const root = parse(html);
+
+    const name = root.querySelector(".B_NuCI")?.textContent ?? "";
+    const imageUrl =
+      root.querySelector("._396cs4._2amPTt._3qGmMb")?.getAttribute("src") ?? "";
+
+    return { name, imageUrl };
+  }
+
+  static async getAmazonProductDetails({ link }: { link: string }) {
+    const res = await fetch(link);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch the product");
+    }
+
+    const html = await res.text();
+
+    const root = parse(html);
+
+    const name = root.querySelector("#productTitle")?.textContent ?? "";
+    const imageUrl =
+      root.querySelector("#landingImage")?.getAttribute("src") ?? "";
+
+    return { name, imageUrl };
+  }
+
+  static async getAjioProductDetails({ link }: { link: string }) {
+    const productId = link.split("/").pop()!.split("?")[0];
+
+    const res = await fetch(`${AJIO_PRODUCT_ENDPOINT}/${productId}`);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch the product");
+    }
+
+    const data = await res.json();
+
+    const name = data.baseOptions[0].options[0].modelImage.altText ?? "";
+    const imageUrl = data.baseOptions[0].options[0].modelImage.url ?? "";
+
+    return { name, imageUrl };
+  }
+
   static async getProductPrice({
     link,
     store,
@@ -41,7 +136,7 @@ export default class ProductRepository {
         currency: price,
       });
 
-      return { status: true, data: numberPrice };
+      return { status: true, data: { price: numberPrice } };
     } catch (e: any) {
       return { status: false, msg: e.message };
     }
@@ -95,5 +190,45 @@ export default class ProductRepository {
     const currencyString = data.price.displayformattedValue ?? "";
 
     return currencyString.replace("Rs. ", "");
+  }
+
+  static async addProduct({
+    link,
+    store,
+    interval,
+    orderedPrice,
+  }: {
+    link: string;
+    store: STORE;
+    interval: number;
+    orderedPrice: number;
+  }) {
+    try {
+      const res = await ProductRepository.getProductDetails({
+        link,
+        store,
+      });
+
+      if (res.status === false) {
+        throw new Error(res.msg);
+      }
+
+      const payload: Product = {
+        link,
+        imageUrl: res.data!.imageUrl,
+        name: res.data!.name,
+        store,
+        interval,
+        orderedPrice,
+      };
+
+      await prisma.product.create({
+        data: payload,
+      });
+
+      return { status: true };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
   }
 }

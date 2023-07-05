@@ -19,7 +19,6 @@ export async function POST(request: Request) {
       },
     })) as Product;
 
-    let count = 0;
     const intervalId = setInterval(async () => {
       const product = (await prisma.product.findFirst({
         where: {
@@ -45,14 +44,9 @@ export async function POST(request: Request) {
         }
       }
 
-      count++;
-
-      if (count === 2) {
+      if (product.status === "PAUSED") {
         clearInterval(intervalId);
       }
-      // if (product.status === "PAUSED") {
-      //   clearInterval(intervalId);
-      // }
     }, product.interval);
 
     return NextResponse.json({

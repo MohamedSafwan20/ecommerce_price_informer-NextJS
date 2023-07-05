@@ -232,4 +232,32 @@ export default class ProductRepository {
       return { status: false, msg: e.message };
     }
   }
+
+  static async updateProduct({ id, data }: { id: number; data: object }) {
+    try {
+      const payload: any = {};
+      for (const [key, value] of Object.entries(data)) {
+        if (key === "id") {
+          continue;
+        }
+
+        if (value === undefined) {
+          continue;
+        }
+
+        payload[key] = value;
+      }
+
+      await prisma.product.update({
+        where: {
+          id,
+        },
+        data: payload,
+      });
+
+      return { status: true };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
 }

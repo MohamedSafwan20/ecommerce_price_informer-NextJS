@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import schedule, { Job } from "node-schedule";
 import { Product } from "../../../../data/models/product_model";
 import { Snapshot } from "../../../../data/models/snapshot_model";
 import ProductRepository from "../../../../data/repositories/product_repository";
@@ -19,35 +20,12 @@ export async function POST(request: Request) {
       },
     })) as Product;
 
-    const intervalId = setInterval(async () => {
-      const product = (await prisma.product.findFirst({
-        where: {
-          id,
-        },
-      })) as Product;
-
-      const res = await ProductRepository.getProductPrice({
-        link: product.link,
-        store: product.store,
-      });
-
-      if (res.status) {
-        const snapshot: Snapshot = {
-          price: res.data!.price,
-          productId: product.id!,
-        };
-
-        await SnapshotRepository.addSnapshot({ snapshot });
-
-        if (res.data!.price < product.orderedPrice) {
-          // TODO: send email here
-        }
+    const job = schedule.scheduleJob(
+      `*/${product.interval} * * * * *`,
+      function () {
+        runTask(id, job);
       }
-
-      if (product.status === "PAUSED") {
-        clearInterval(intervalId);
-      }
-    }, product.interval);
+    );
 
     return NextResponse.json({
       status: true,
@@ -56,5 +34,35 @@ export async function POST(request: Request) {
     return NextResponse.json({
       status: false,
     });
+  }
+}
+
+async function runTask(id: number, job: Job) {
+  const product = (await prisma.product.findFirst({
+    where: {
+      id,
+    },
+  })) as Product;
+
+  const res = await ProductRepository.getProductPrice({
+    link: product.link,
+    store: product.store,
+  });
+
+  if (res.status) {
+    const snapshot: Snapshot = {
+      price: res.data!.price,
+      productId: product.id!,
+    };
+
+    await SnapshotRepository.addSnapshot({ snapshot });
+
+    if (res.data!.price < product.orderedPrice) {
+      // TODO: send email here
+    }
+
+    if (product.status === "PAUSED") {
+      job.cancel();
+    }
   }
 }

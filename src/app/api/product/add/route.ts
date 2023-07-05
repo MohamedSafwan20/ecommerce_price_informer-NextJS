@@ -1,10 +1,10 @@
+import { Store } from "@/data/models/product_model";
 import { NextResponse } from "next/server";
-import { STORE } from "../../../../config/constants";
 import ProductRepository from "../../../../data/repositories/product_repository";
 
 type Body = {
   link: string;
-  store: STORE;
+  store: Store;
   interval: number;
   orderedPrice: number;
 };

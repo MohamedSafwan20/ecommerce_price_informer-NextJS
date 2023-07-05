@@ -8,12 +8,22 @@ datasource db {
 }
 
 model Product {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   link         String
   imageUrl     String
   name         String
   store        String
   interval     Int
   orderedPrice Int
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
+  snapshots    Snapshot[]
+  status       String
+}
+
+model Snapshot {
+  id        Int      @id @default(autoincrement())
+  time      DateTime @default(now())
+  price     Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
 }

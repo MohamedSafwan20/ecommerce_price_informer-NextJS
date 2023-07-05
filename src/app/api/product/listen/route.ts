@@ -1,40 +1,59 @@
 import { NextResponse } from "next/server";
-import { STORE } from "../../../../config/constants";
+import { Product } from "../../../../data/models/product_model";
+import { Snapshot } from "../../../../data/models/snapshot_model";
 import ProductRepository from "../../../../data/repositories/product_repository";
+import SnapshotRepository from "../../../../data/repositories/snapshot_repository";
+import { prisma } from "../../_base";
 
 type Body = {
-  link: string;
-  store: STORE;
-  interval: number;
-  orderedPrice: number;
+  id: number;
 };
 
 export async function POST(request: Request) {
   try {
-    const { link, store, interval, orderedPrice } =
-      (await request.json()) as Body;
+    const { id } = (await request.json()) as Body;
+
+    const product = (await prisma.product.findFirst({
+      where: {
+        id,
+      },
+    })) as Product;
 
     let count = 0;
     const intervalId = setInterval(async () => {
+      const product = (await prisma.product.findFirst({
+        where: {
+          id,
+        },
+      })) as Product;
+
       const res = await ProductRepository.getProductPrice({
-        link,
-        store,
+        link: product.link,
+        store: product.store,
       });
 
       if (res.status) {
-        if (res.data!.price < orderedPrice) {
-          return NextResponse.json({
-            status: false,
-          });
+        const snapshot: Snapshot = {
+          price: res.data!.price,
+          productId: product.id!,
+        };
+
+        await SnapshotRepository.addSnapshot({ snapshot });
+
+        if (res.data!.price < product.orderedPrice) {
+          // TODO: send email here
         }
       }
 
       count++;
 
-      if (count === 3) {
+      if (count === 2) {
         clearInterval(intervalId);
       }
-    }, interval);
+      // if (product.status === "PAUSED") {
+      //   clearInterval(intervalId);
+      // }
+    }, product.interval);
 
     return NextResponse.json({
       status: true,

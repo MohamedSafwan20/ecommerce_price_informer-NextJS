@@ -1,8 +1,8 @@
 import { parse } from "node-html-parser";
 import { prisma } from "../../app/api/_base";
-import { AJIO_PRODUCT_ENDPOINT, STORE } from "../../config/constants";
+import { AJIO_PRODUCT_ENDPOINT } from "../../config/constants";
 import Utils from "../../utils/utils";
-import { Product } from "../models/product_model";
+import { Product, Store } from "../models/product_model";
 
 export default class ProductRepository {
   static async getProductDetails({
@@ -10,23 +10,23 @@ export default class ProductRepository {
     store,
   }: {
     link: string;
-    store: STORE;
+    store: string;
   }) {
     try {
       let productDetails = { name: "", imageUrl: "" };
 
       switch (store) {
-        case STORE.FLIPKART:
+        case "FLIPKART":
           productDetails = await this.getFlipkartProductDetails({ link });
 
           break;
 
-        case STORE.AMAZON:
+        case "AMAZON":
           productDetails = await this.getAmazonProductDetails({ link });
 
           break;
 
-        case STORE.AJIO:
+        case "AJIO":
           productDetails = await this.getAjioProductDetails({ link });
 
           break;
@@ -103,23 +103,23 @@ export default class ProductRepository {
     store,
   }: {
     link: string;
-    store: STORE;
+    store: string;
   }) {
     try {
       let price = "";
 
       switch (store) {
-        case STORE.FLIPKART:
+        case "FLIPKART":
           price = await this.getFlipkartProductPrice({ link });
 
           break;
 
-        case STORE.AMAZON:
+        case "AMAZON":
           price = await this.getAmazonProductPrice({ link });
 
           break;
 
-        case STORE.AJIO:
+        case "AJIO":
           price = await this.getAjioProductPrice({ link });
 
           break;
@@ -199,7 +199,7 @@ export default class ProductRepository {
     orderedPrice,
   }: {
     link: string;
-    store: STORE;
+    store: Store;
     interval: number;
     orderedPrice: number;
   }) {
@@ -220,6 +220,7 @@ export default class ProductRepository {
         store,
         interval,
         orderedPrice,
+        status: "RUNNING",
       };
 
       await prisma.product.create({

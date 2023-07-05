@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import schedule, { Job } from "node-schedule";
+import { Job, scheduleJob } from "node-schedule";
 import { Product } from "../../../../data/models/product_model";
 import { Snapshot } from "../../../../data/models/snapshot_model";
 import ProductRepository from "../../../../data/repositories/product_repository";
 import SnapshotRepository from "../../../../data/repositories/snapshot_repository";
+import EmailService from "../../../../data/services/email_service";
+import Utils from "../../../../utils/utils";
 import { prisma } from "../../_base";
 
 type Body = {
@@ -20,12 +22,9 @@ export async function POST(request: Request) {
       },
     })) as Product;
 
-    const job = schedule.scheduleJob(
-      `*/${product.interval} * * * * *`,
-      function () {
-        runTask(id, job);
-      }
-    );
+    const job = scheduleJob(`*/${product.interval} * * * * *`, function () {
+      runTask(id, job);
+    });
 
     return NextResponse.json({
       status: true,
@@ -44,6 +43,11 @@ async function runTask(id: number, job: Job) {
     },
   })) as Product;
 
+  if (product.status === "PAUSED") {
+    job.cancel();
+    return;
+  }
+
   const res = await ProductRepository.getProductPrice({
     link: product.link,
     store: product.store,
@@ -58,11 +62,16 @@ async function runTask(id: number, job: Job) {
     await SnapshotRepository.addSnapshot({ snapshot });
 
     if (res.data!.price < product.orderedPrice) {
-      // TODO: send email here
-    }
-
-    if (product.status === "PAUSED") {
-      job.cancel();
+      EmailService.sendProductPriceUpdateEmail({
+        productLink: product.link,
+        productName: product.name,
+        storeName: Utils.capitalize({ text: product.store }),
+        message: EmailService.generateProductUpdateEmailMessage({
+          currentPrice: res.data!.price,
+          orderedPrice: product.orderedPrice,
+        }),
+        toEmail: "mohamedsfn20@gmail.com",
+      });
     }
   }
 }

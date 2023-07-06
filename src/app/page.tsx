@@ -8,6 +8,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../components/ui/accordion";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 
 export default function Home() {
   return (
@@ -76,21 +82,18 @@ export default function Home() {
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            Yes. It adheres to the WAI-ARIA design pattern.
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="item-2">
-          <AccordionTrigger>Is it styled?</AccordionTrigger>
-          <AccordionContent>
-            Yes. It comes with default styles that matches the other
-            components&apos; aesthetic.
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="item-3">
-          <AccordionTrigger>Is it animated?</AccordionTrigger>
-          <AccordionContent>
-            Yes. It&apos;s animated by default, but you can disable it if you
-            prefer.
+            <Card>
+              <CardHeader className="flex justify-between items-center flex-row">
+                <CardTitle className="text-success">₹3000</CardTitle>
+                <CardDescription>Thu, 11:30PM</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="flex justify-between items-center flex-row">
+                <CardTitle className="text-destructive">₹5000</CardTitle>
+                <CardDescription>Thu, 11:30PM</CardDescription>
+              </CardHeader>
+            </Card>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

@@ -29,6 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useAddProductFormStore } from "../../data/stores/add_product_form_store";
 
 const formSchema = z.object({
   link: z
@@ -68,17 +69,12 @@ const formSchema = z.object({
 });
 
 export default function AddProductForm() {
+  const { formValues, addProduct } = useAddProductFormStore();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      link: "",
-      store: "",
-      interval: 30,
-      orderedPrice: "",
-    },
+    defaultValues: formValues,
   });
-
-  function addProduct(values: z.infer<typeof formSchema>) {}
 
   return (
     <Dialog>
@@ -95,7 +91,7 @@ export default function AddProductForm() {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(addProduct)}>
+          <form onSubmit={form.handleSubmit((data) => addProduct(data))}>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}

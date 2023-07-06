@@ -8,21 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Edit3 } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 import {
   Form,
   FormControl,
@@ -31,6 +16,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit3 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useEditProductFormStore } from "../../data/stores/edit_product_form_store";
 
 const formSchema = z.object({
   link: z
@@ -69,17 +68,12 @@ const formSchema = z.object({
     }),
 });
 
-function updateProduct(values: z.infer<typeof formSchema>) {}
-
 export default function EditProductForm() {
+  const { formValues, updateProduct } = useEditProductFormStore();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      link: "",
-      store: "",
-      interval: 30,
-      orderedPrice: "",
-    },
+    defaultValues: formValues,
   });
 
   return (
@@ -98,7 +92,7 @@ export default function EditProductForm() {
           <DialogDescription>Make changes to product here.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(updateProduct)}>
+          <form onSubmit={form.handleSubmit((data) => updateProduct(data))}>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}

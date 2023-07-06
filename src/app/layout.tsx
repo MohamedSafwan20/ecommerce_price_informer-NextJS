@@ -1,8 +1,8 @@
-import "./globals.css";
-import { Inter } from "next/font/google";
+import { Oswald } from "next/font/google";
 import { ThemeProvider } from "../components/theme_provider";
+import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const oswald = Oswald({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Ecommerce Price Informer",
@@ -16,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={oswald.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>

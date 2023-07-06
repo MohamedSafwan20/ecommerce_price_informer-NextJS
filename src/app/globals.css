@@ -109,3 +109,16 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-primary;
 }
+
+/* Styles to hide arrows from number inputs */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  @apply appearance-none m-0;
+}
+
+/* Firefox */
+input[type="number"] {
+  @apply [appearance:textfield];
+  /* -moz-appearance: textfield; */
+}

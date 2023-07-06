@@ -88,3 +88,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Scrollbar styles */
+/* width */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  @apply bg-secondary;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  @apply bg-ring rounded-sm;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary;
+}

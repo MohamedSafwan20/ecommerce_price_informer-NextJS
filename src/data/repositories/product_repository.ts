@@ -214,7 +214,7 @@ export default class ProductRepository {
         throw new Error(res.msg);
       }
 
-      const payload: Product = {
+      const payload: Omit<Product, "snapshots"> = {
         link,
         imageUrl: res.data!.imageUrl,
         name: res.data!.name,
@@ -268,6 +268,16 @@ export default class ProductRepository {
       });
 
       return { status: true };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
+
+  static async fetchAllProducts() {
+    try {
+      const res = await prisma.product.findMany();
+
+      return { status: true, data: res };
     } catch (e: any) {
       return { status: false, msg: e.message };
     }

@@ -1,4 +1,5 @@
 import { Oswald } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "../components/theme_provider";
 import "./globals.css";
 
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body className={oswald.className}>
         <ThemeProvider attribute="class" defaultTheme="light">
           {children}
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

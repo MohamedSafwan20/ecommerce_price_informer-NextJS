@@ -29,7 +29,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { STORES } from "../../config/constants";
 import { useAddProductFormStore } from "../../data/stores/add_product_form_store";
+import Utils from "../../utils/utils";
+import Loader from "./loader";
 
 const formSchema = z.object({
   link: z
@@ -45,7 +48,7 @@ const formSchema = z.object({
     .min(1, {
       message: "Store is Required",
     })
-    .refine((value) => value !== "apple", {
+    .refine((value) => STORES.includes(value.toUpperCase()), {
       message: "Invalid store",
     }),
   interval: z.coerce
@@ -69,7 +72,8 @@ const formSchema = z.object({
 });
 
 export default function AddProductForm() {
-  const { formValues, addProduct } = useAddProductFormStore();
+  const { formValues, isDialogOpen, addProduct, updateState, isLoading } =
+    useAddProductFormStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,7 +81,15 @@ export default function AddProductForm() {
   });
 
   return (
-    <Dialog>
+    <Dialog
+      open={isDialogOpen}
+      onOpenChange={(open) => {
+        updateState({
+          state: "isDialogOpen",
+          value: open,
+        });
+      }}
+    >
       <DialogTrigger asChild>
         <Button size="icon" className="absolute right-20 bottom-12">
           <Plus className="h-4 w-4" />
@@ -119,8 +131,15 @@ export default function AddProductForm() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value="apple">Apple</SelectItem>
-                            <SelectItem value="banana">Banana</SelectItem>
+                            {STORES.map((store) => {
+                              return (
+                                <SelectItem value={store} key={store}>
+                                  {Utils.capitalize({
+                                    text: store,
+                                  })}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -157,7 +176,7 @@ export default function AddProductForm() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              {isLoading ? <Loader /> : <Button type="submit">Save</Button>}
             </DialogFooter>
           </form>
         </Form>

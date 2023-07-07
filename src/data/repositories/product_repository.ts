@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { parse } from "node-html-parser";
 import { prisma } from "../../app/api/_base";
 import { AJIO_PRODUCT_ENDPOINT } from "../../config/constants";
@@ -229,7 +230,18 @@ export default class ProductRepository {
 
       return { status: true };
     } catch (e: any) {
-      return { status: false, msg: e.message };
+      let errorMessage = e.message;
+
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === "P2002") {
+          const arr = e.meta?.target as any;
+          errorMessage = `${Utils.capitalize({
+            text: arr[0] ?? "",
+          })} already exists`;
+        }
+      }
+
+      return { status: false, msg: errorMessage };
     }
   }
 

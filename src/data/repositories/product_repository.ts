@@ -249,23 +249,23 @@ export default class ProductRepository {
 
   static async updateProduct({ id, data }: { id: number; data: any }) {
     try {
-      const res = await ProductRepository.getProductDetails({
-        link: data.link,
-        store: data.store,
-      });
+      let payload = data;
 
-      if (res.status === false) {
-        throw new Error(res.msg);
+      if (data.link) {
+        const res = await ProductRepository.getProductDetails({
+          link: data.link,
+          store: data.store,
+        });
+
+        if (res.status === false) {
+          throw new Error(res.msg);
+        }
+
+        payload = {
+          ...payload,
+          ...res.data!,
+        };
       }
-
-      const payload: Omit<Product, "snapshots" | "status"> = {
-        link: data.link,
-        imageUrl: res.data!.imageUrl,
-        name: res.data!.name,
-        store: data.store,
-        interval: data.interval,
-        orderedPrice: data.orderedPrice,
-      };
 
       await prisma.product.update({
         where: {

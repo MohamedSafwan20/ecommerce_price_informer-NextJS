@@ -17,7 +17,8 @@ import EditProductForm from "./edit_product_form";
 import ProductAccordionSkeleton from "./product_accordion_skeleton";
 
 export default function ProductAccordion() {
-  const { products, init, isLoading } = useProductAccordionStore();
+  const { products, init, isLoading, changeProductStatus } =
+    useProductAccordionStore();
 
   useEffect(() => {
     init();
@@ -88,7 +89,16 @@ export default function ProductAccordion() {
                           <div className="flex justify-center items-center gap-1">
                             {product.status === "RUNNING" ? (
                               <>
-                                <Pause className="h-4 w-4" />
+                                <Pause
+                                  className="h-4 w-4"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    changeProductStatus({
+                                      status: "PAUSED",
+                                      product,
+                                    });
+                                  }}
+                                />
                                 <div className="w-[5px] h-[5px] bg-success rounded-xl"></div>
                                 <span className="text-[0.7em] text-success">
                                   Running
@@ -100,6 +110,11 @@ export default function ProductAccordion() {
                                   className="h-4 w-4"
                                   onClick={(e) => {
                                     e.stopPropagation();
+
+                                    changeProductStatus({
+                                      status: "RUNNING",
+                                      product,
+                                    });
                                   }}
                                 />
                                 <div className="w-[5px] h-[5px] bg-warning rounded-xl"></div>

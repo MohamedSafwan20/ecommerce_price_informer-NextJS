@@ -3,7 +3,7 @@ import { parse } from "node-html-parser";
 import { prisma } from "../../app/api/_base";
 import { AJIO_PRODUCT_ENDPOINT } from "../../config/constants";
 import Utils from "../../utils/utils";
-import { Product, Store } from "../models/product_model";
+import { Product, Status, Store } from "../models/product_model";
 import { Snapshot } from "../models/snapshot_model";
 
 export default class ProductRepository {
@@ -292,9 +292,12 @@ export default class ProductRepository {
     }
   }
 
-  static async fetchAllProducts() {
+  static async fetchAllProducts(status?: Status) {
     try {
       const res = await prisma.product.findMany({
+        where: {
+          status,
+        },
         include: {
           snapshots: true,
         },

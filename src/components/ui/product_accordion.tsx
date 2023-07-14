@@ -18,22 +18,29 @@ import Loader from "./loader";
 import ProductAccordionSkeleton from "./product_accordion_skeleton";
 
 export default function ProductAccordion() {
-  const { products, init, isLoading, changeProductStatus, statusLoaders } =
-    useProductAccordionStore();
+  const {
+    products,
+    init,
+    isLoading,
+    changeProductStatus,
+    statusLoaders,
+    onStatusChange,
+    selectedStatus,
+  } = useProductAccordionStore();
 
   useEffect(() => {
     init();
   }, [init]);
 
   return (
-    <Tabs defaultValue="ALL" className="w-full">
+    <Tabs defaultValue="ALL" className="w-full" onValueChange={onStatusChange}>
       <TabsList className="ml-28">
         <TabsTrigger value="ALL">All</TabsTrigger>
         <TabsTrigger value="RUNNING">Running</TabsTrigger>
         <TabsTrigger value="PAUSED">Paused</TabsTrigger>
       </TabsList>
       <div className="w-[75%] mx-auto pr-4 h-[60vh] overflow-y-auto">
-        <TabsContent value="ALL">
+        <TabsContent value={selectedStatus}>
           {isLoading ? (
             <ProductAccordionSkeleton />
           ) : (
@@ -170,8 +177,6 @@ export default function ProductAccordion() {
             </Accordion>
           )}
         </TabsContent>
-        <TabsContent value="RUNNING"></TabsContent>
-        <TabsContent value="PAUSED"></TabsContent>
       </div>
     </Tabs>
   );

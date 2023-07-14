@@ -6,8 +6,9 @@ interface ProductAccordionState {
   products: Product[];
   isLoading: boolean;
   statusLoaders: boolean[];
+  selectedStatus: Status | "ALL";
   init: () => void;
-  fetchProducts: () => void;
+  fetchProducts: (status?: Status) => void;
   changeProductStatus: ({
     status,
     product,
@@ -17,6 +18,7 @@ interface ProductAccordionState {
     product: Product;
     index: number;
   }) => void;
+  onStatusChange: (value: string) => void;
 }
 
 export const useProductAccordionStore = create<ProductAccordionState>()(
@@ -24,13 +26,14 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
     products: [],
     isLoading: false,
     statusLoaders: [],
+    selectedStatus: "ALL",
     init: () => {
       get().fetchProducts();
     },
-    fetchProducts: async () => {
+    fetchProducts: async (status) => {
       set({ isLoading: true });
 
-      const res = await ProductAccordionController.fetchProducts();
+      const res = await ProductAccordionController.fetchProducts(status);
 
       set({ isLoading: false });
 
@@ -97,6 +100,20 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
       set({
         products: newProducts,
       });
+    },
+    onStatusChange: (value) => {
+      if (value === get().selectedStatus) {
+        return;
+      }
+
+      set({ selectedStatus: value as Status | "ALL" });
+
+      if (value === "ALL") {
+        get().fetchProducts();
+        return;
+      }
+
+      get().fetchProducts(value as Status);
     },
   })
 );

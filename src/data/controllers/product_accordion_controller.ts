@@ -8,9 +8,15 @@ import {
 import { Product, Status } from "../models/product_model";
 
 export default class ProductAccordionController {
-  static async fetchProducts() {
+  static async fetchProducts(status?: Status) {
     try {
-      const res = await axios.get(GET_ALL_PRODUCTS_ENDPOINT);
+      let res = null;
+
+      if (status === undefined) {
+        res = await axios.get(GET_ALL_PRODUCTS_ENDPOINT);
+      } else {
+        res = await axios.get(`${GET_ALL_PRODUCTS_ENDPOINT}?status=${status}`);
+      }
 
       if (res.data.status === false) {
         throw new Error(res.data.msg);

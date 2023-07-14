@@ -22,16 +22,20 @@ export async function POST(request: Request) {
       },
     })) as Product;
 
-    const job = scheduleJob(`*/${product.interval} * * * * *`, function () {
-      runTask(id, job);
-    });
+    const job: Job = scheduleJob(
+      `*/${product.interval} * * * * *`,
+      function () {
+        runTask(id, job);
+      }
+    );
 
     return NextResponse.json({
       status: true,
     });
-  } catch (e) {
+  } catch (e: any) {
     return NextResponse.json({
       status: false,
+      msg: e.message,
     });
   }
 }

@@ -5,14 +5,17 @@ import { Product, Status } from "../models/product_model";
 interface ProductAccordionState {
   products: Product[];
   isLoading: boolean;
+  statusLoaders: boolean[];
   init: () => void;
   fetchProducts: () => void;
   changeProductStatus: ({
     status,
     product,
+    index,
   }: {
     status: Status;
     product: Product;
+    index: number;
   }) => void;
 }
 
@@ -20,6 +23,7 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
   (set, get) => ({
     products: [],
     isLoading: false,
+    statusLoaders: [],
     init: () => {
       get().fetchProducts();
     },
@@ -37,18 +41,47 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
     changeProductStatus: async ({
       status,
       product,
+      index,
     }: {
       status: Status;
       product: Product;
+      index: number;
     }) => {
-      const res = await ProductAccordionController.changeProductStatus({
-        status,
-        product,
+      const loaders = get().statusLoaders;
+      loaders[index] = true;
+
+      set({
+        statusLoaders: loaders,
       });
 
-      if (res.status === false) {
-        return;
+      if (status === "RUNNING") {
+        const [changeRes] = await Promise.all([
+          ProductAccordionController.changeProductStatus({
+            status,
+            product,
+          }),
+          ProductAccordionController.listenPriceChangeOnProduct(product),
+        ]);
+
+        if (changeRes.status === false) {
+          return;
+        }
+      } else {
+        const res = await ProductAccordionController.changeProductStatus({
+          status,
+          product,
+        });
+
+        if (res.status === false) {
+          return;
+        }
       }
+
+      loaders[index] = false;
+
+      set({
+        statusLoaders: loaders,
+      });
 
       const newProducts = get().products.map((value) => {
         if (value.id === product.id) {

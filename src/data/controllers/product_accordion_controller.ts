@@ -2,6 +2,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
   GET_ALL_PRODUCTS_ENDPOINT,
+  PRODUCT_LISTEN_ENDPOINT,
   UPDATE_PRODUCT_ENDPOINT,
 } from "../../config/constants";
 import { Product, Status } from "../models/product_model";
@@ -35,6 +36,26 @@ export default class ProductAccordionController {
       };
 
       const res = await axios.put(UPDATE_PRODUCT_ENDPOINT, payload);
+
+      if (res.data.status === false) {
+        throw new Error(res.data.msg);
+      }
+
+      return { status: true };
+    } catch (e: any) {
+      toast.error(e.message);
+
+      return { status: false };
+    }
+  }
+
+  static async listenPriceChangeOnProduct(product: Product) {
+    try {
+      const payload = {
+        id: product.id,
+      };
+
+      const res = await axios.post(PRODUCT_LISTEN_ENDPOINT, payload);
 
       if (res.data.status === false) {
         throw new Error(res.data.msg);

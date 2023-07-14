@@ -14,10 +14,11 @@ import {
 } from "./accordion";
 import { Card, CardDescription, CardHeader, CardTitle } from "./card";
 import EditProductForm from "./edit_product_form";
+import Loader from "./loader";
 import ProductAccordionSkeleton from "./product_accordion_skeleton";
 
 export default function ProductAccordion() {
-  const { products, init, isLoading, changeProductStatus } =
+  const { products, init, isLoading, changeProductStatus, statusLoaders } =
     useProductAccordionStore();
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export default function ProductAccordion() {
           {isLoading ? (
             <ProductAccordionSkeleton />
           ) : (
-            products.map((product) => {
+            products.map((product, index) => {
               return (
                 <Accordion type="single" collapsible key={product.id}>
                   <AccordionItem value="item-1">
@@ -89,16 +90,21 @@ export default function ProductAccordion() {
                           <div className="flex justify-center items-center gap-1">
                             {product.status === "RUNNING" ? (
                               <>
-                                <Pause
-                                  className="h-4 w-4"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    changeProductStatus({
-                                      status: "PAUSED",
-                                      product,
-                                    });
-                                  }}
-                                />
+                                {statusLoaders[index] === true ? (
+                                  <Loader showLoadingText={false} size={16} />
+                                ) : (
+                                  <Pause
+                                    className="h-4 w-4"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      changeProductStatus({
+                                        status: "PAUSED",
+                                        product,
+                                        index,
+                                      });
+                                    }}
+                                  />
+                                )}
                                 <div className="w-[5px] h-[5px] bg-success rounded-xl"></div>
                                 <span className="text-[0.7em] text-success">
                                   Running
@@ -106,17 +112,22 @@ export default function ProductAccordion() {
                               </>
                             ) : (
                               <>
-                                <Play
-                                  className="h-4 w-4"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                {statusLoaders[index] === true ? (
+                                  <Loader showLoadingText={false} size={16} />
+                                ) : (
+                                  <Play
+                                    className="h-4 w-4"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
 
-                                    changeProductStatus({
-                                      status: "RUNNING",
-                                      product,
-                                    });
-                                  }}
-                                />
+                                      changeProductStatus({
+                                        status: "RUNNING",
+                                        product,
+                                        index,
+                                      });
+                                    }}
+                                  />
+                                )}
                                 <div className="w-[5px] h-[5px] bg-warning rounded-xl"></div>
                                 <span className="text-[0.7em] text-warning">
                                   Paused

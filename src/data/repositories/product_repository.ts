@@ -4,6 +4,7 @@ import { prisma } from "../../app/api/_base";
 import { AJIO_PRODUCT_ENDPOINT } from "../../config/constants";
 import Utils from "../../utils/utils";
 import { Product, Store } from "../models/product_model";
+import { Snapshot } from "../models/snapshot_model";
 
 export default class ProductRepository {
   static async getProductDetails({
@@ -318,6 +319,26 @@ export default class ProductRepository {
       return { status: true, data: res };
     } catch (e: any) {
       return { status: false, msg: e.message };
+    }
+  }
+
+  static async getProductSnapshots(productId: number) {
+    try {
+      const snapshots = (await prisma.snapshot.findMany({
+        where: {
+          productId,
+        },
+      })) as Snapshot[];
+
+      return { status: true, data: snapshots };
+    } catch (e: any) {
+      let errorMessage = e.message;
+
+      if (e instanceof Prisma.PrismaClientValidationError) {
+        errorMessage = "Invalid product id";
+      }
+
+      return { status: false, msg: errorMessage };
     }
   }
 }

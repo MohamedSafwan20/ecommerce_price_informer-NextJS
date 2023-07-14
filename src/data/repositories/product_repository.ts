@@ -59,7 +59,9 @@ export default class ProductRepository {
 
     const name = root.querySelector(".B_NuCI")?.textContent ?? "";
     const imageUrl =
-      root.querySelector("._396cs4._2amPTt._3qGmMb")?.getAttribute("src") ?? "";
+      root.querySelector("._396cs4._2amPTt._3qGmMb")?.getAttribute("src") ??
+      root.querySelector("._2r_T1I._396QI4")?.getAttribute("src") ??
+      "";
 
     return { name, imageUrl };
   }
@@ -245,20 +247,25 @@ export default class ProductRepository {
     }
   }
 
-  static async updateProduct({ id, data }: { id: number; data: object }) {
+  static async updateProduct({ id, data }: { id: number; data: any }) {
     try {
-      const payload: any = {};
-      for (const [key, value] of Object.entries(data)) {
-        if (key === "id") {
-          continue;
-        }
+      const res = await ProductRepository.getProductDetails({
+        link: data.link,
+        store: data.store,
+      });
 
-        if (value === undefined) {
-          continue;
-        }
-
-        payload[key] = value;
+      if (res.status === false) {
+        throw new Error(res.msg);
       }
+
+      const payload: Omit<Product, "snapshots" | "status"> = {
+        link: data.link,
+        imageUrl: res.data!.imageUrl,
+        name: res.data!.name,
+        store: data.store,
+        interval: data.interval,
+        orderedPrice: data.orderedPrice,
+      };
 
       await prisma.product.update({
         where: {
@@ -269,13 +276,44 @@ export default class ProductRepository {
 
       return { status: true };
     } catch (e: any) {
-      return { status: false, msg: e.message };
+      let errorMessage = e.message;
+
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === "P2002") {
+          const arr = e.meta?.target as any;
+          errorMessage = `${Utils.capitalize({
+            text: arr[0] ?? "",
+          })} already exists`;
+        }
+      }
+
+      return { status: false, msg: errorMessage };
     }
   }
 
   static async fetchAllProducts() {
     try {
       const res = await prisma.product.findMany();
+
+      return { status: true, data: res };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
+
+  static async fetchProduct({ id }: { id: string }) {
+    try {
+      const parsedId = parseInt(id);
+
+      if (isNaN(parsedId)) {
+        throw new Error("Bad request");
+      }
+
+      const res = await prisma.product.findUniqueOrThrow({
+        where: {
+          id: parsedId,
+        },
+      });
 
       return { status: true, data: res };
     } catch (e: any) {

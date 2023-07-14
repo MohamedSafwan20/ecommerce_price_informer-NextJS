@@ -83,7 +83,7 @@ export default function ProductAccordion() {
                               e.stopPropagation();
                             }}
                           >
-                            <EditProductForm />
+                            <EditProductForm product={product} />
                           </div>
                           <div className="flex justify-center items-center gap-1">
                             {product.status === "RUNNING" ? (

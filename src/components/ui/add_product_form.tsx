@@ -77,7 +77,7 @@ export default function AddProductForm() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: formValues,
+    values: formValues,
   });
 
   return (

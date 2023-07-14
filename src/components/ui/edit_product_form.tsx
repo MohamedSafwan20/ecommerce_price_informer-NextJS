@@ -25,11 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { STORES } from "@/config/constants";
+import { Product } from "@/data/models/product_model";
+import Utils from "@/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Edit3 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useEditProductFormStore } from "../../data/stores/edit_product_form_store";
+import Loader from "./loader";
 
 const formSchema = z.object({
   link: z
@@ -68,21 +72,41 @@ const formSchema = z.object({
     }),
 });
 
-export default function EditProductForm() {
-  const { formValues, updateProduct } = useEditProductFormStore();
+type Props = {
+  product: Product;
+};
+
+export default function EditProductForm({ product }: Props) {
+  const {
+    formValues,
+    updateProduct,
+    fetchProduct,
+    isLoading,
+    isDialogOpen,
+    updateState,
+  } = useEditProductFormStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: formValues,
+    values: formValues,
   });
 
   return (
-    <Dialog>
+    <Dialog
+      open={isDialogOpen}
+      onOpenChange={(open) => {
+        updateState({
+          state: "isDialogOpen",
+          value: open,
+        });
+      }}
+    >
       <DialogTrigger asChild>
         <Edit3
           className="h-4 w-4"
           onClick={(e) => {
             e.stopPropagation();
+            fetchProduct(product);
           }}
         />
       </DialogTrigger>
@@ -92,7 +116,7 @@ export default function EditProductForm() {
           <DialogDescription>Make changes to product here.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => updateProduct(data))}>
+          <form onSubmit={form.handleSubmit(updateProduct)}>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}
@@ -114,14 +138,25 @@ export default function EditProductForm() {
                   <FormItem>
                     <FormLabel htmlFor="store">Store</FormLabel>
                     <FormControl>
-                      <Select required onValueChange={field.onChange}>
+                      <Select
+                        required
+                        onValueChange={field.onChange}
+                        {...field}
+                      >
                         <SelectTrigger id="store">
                           <SelectValue placeholder="Select a store" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value="apple">Apple</SelectItem>
-                            <SelectItem value="banana">Banana</SelectItem>
+                            {STORES.map((store) => {
+                              return (
+                                <SelectItem value={store} key={store}>
+                                  {Utils.capitalize({
+                                    text: store,
+                                  })}
+                                </SelectItem>
+                              );
+                            })}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -158,7 +193,7 @@ export default function EditProductForm() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              {isLoading ? <Loader /> : <Button type="submit">Save</Button>}
             </DialogFooter>
           </form>
         </Form>

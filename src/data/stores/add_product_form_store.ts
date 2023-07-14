@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import AddProductFormController from "../controllers/add_product_form_controller";
+import { useProductAccordionStore } from "./product_accordion_store";
 
 type FormValues = {
   link: string;
@@ -14,6 +15,7 @@ interface AddProductFormState {
   isLoading: boolean;
   addProduct: (data: FormValues) => void;
   updateState: ({ state, value }: { state: string; value: any }) => void;
+  resetFormValues: () => void;
 }
 
 export const useAddProductFormStore = create<AddProductFormState>()(
@@ -39,8 +41,22 @@ export const useAddProductFormStore = create<AddProductFormState>()(
       set({ isLoading: false });
 
       if (res.status) {
+        useProductAccordionStore.getState().fetchProducts();
+
         set({ isDialogOpen: false });
+
+        get().resetFormValues();
       }
+    },
+    resetFormValues: () => {
+      set({
+        formValues: {
+          link: "",
+          store: "",
+          interval: 30,
+          orderedPrice: NaN,
+        },
+      });
     },
   })
 );

@@ -37,10 +37,10 @@ export default function ProductAccordion() {
           {isLoading ? (
             <ProductAccordionSkeleton />
           ) : (
-            products.map((product, index) => {
-              return (
-                <Accordion type="single" collapsible key={product.id}>
-                  <AccordionItem value="item-1">
+            <Accordion type="single" collapsible>
+              {products.map((product, index) => {
+                return (
+                  <AccordionItem value={`item-${index}`} key={product.id}>
                     <AccordionTrigger>
                       <div className="flex justify-between items-center w-full">
                         <div className="flex justify-center gap-6">
@@ -139,27 +139,35 @@ export default function ProductAccordion() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                      <Card>
-                        <CardHeader className="flex justify-between items-center flex-row">
-                          <CardTitle className="text-success text-base">
-                            ₹3000
-                          </CardTitle>
-                          <CardDescription>Thu, 11:30PM</CardDescription>
-                        </CardHeader>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex justify-between items-center flex-row">
-                          <CardTitle className="text-destructive text-base">
-                            ₹5000
-                          </CardTitle>
-                          <CardDescription>Thu, 11:30PM</CardDescription>
-                        </CardHeader>
-                      </Card>
+                      {product.snapshots?.map((snapshot) => {
+                        const date = new Intl.DateTimeFormat("en-IN", {
+                          dateStyle: "full",
+                          timeStyle: "short",
+                        }).format(new Date(product.createdAt!));
+
+                        const formattedDate = date.replace(" at", "");
+                        return (
+                          <Card key={snapshot.id}>
+                            <CardHeader className="flex justify-between items-center flex-row">
+                              <CardTitle
+                                className={`${
+                                  snapshot.price < product.orderedPrice
+                                    ? "text-success"
+                                    : "text-destructive"
+                                }  text-base`}
+                              >
+                                ₹{snapshot.price}
+                              </CardTitle>
+                              <CardDescription>{formattedDate}</CardDescription>
+                            </CardHeader>
+                          </Card>
+                        );
+                      })}
                     </AccordionContent>
                   </AccordionItem>
-                </Accordion>
-              );
-            })
+                );
+              })}
+            </Accordion>
           )}
         </TabsContent>
         <TabsContent value="RUNNING"></TabsContent>

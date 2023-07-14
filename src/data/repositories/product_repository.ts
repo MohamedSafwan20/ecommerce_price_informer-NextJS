@@ -294,7 +294,11 @@ export default class ProductRepository {
 
   static async fetchAllProducts() {
     try {
-      const res = await prisma.product.findMany();
+      const res = await prisma.product.findMany({
+        include: {
+          snapshots: true,
+        },
+      });
 
       return { status: true, data: res };
     } catch (e: any) {

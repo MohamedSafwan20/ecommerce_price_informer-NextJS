@@ -1,10 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { parse } from "node-html-parser";
+import { Job, scheduleJob } from "node-schedule";
 import { prisma } from "../../app/api/_base";
 import { AJIO_PRODUCT_ENDPOINT } from "../../config/constants";
 import Utils from "../../utils/utils";
 import { Product, Status, Store } from "../models/product_model";
 import { Snapshot } from "../models/snapshot_model";
+import EmailService from "../services/email_service";
+import SnapshotRepository from "./snapshot_repository";
 
 export default class ProductRepository {
   static async getProductDetails({
@@ -227,9 +230,15 @@ export default class ProductRepository {
         status: "RUNNING",
       };
 
-      await prisma.product.create({
+      const product = (await prisma.product.create({
         data: payload,
-      });
+      })) as Product;
+
+      const listenProductRes = await this.listenPriceChangeOnProduct(product);
+
+      if (listenProductRes.status === false) {
+        throw new Error(res.msg);
+      }
 
       return { status: true };
     } catch (e: any) {
@@ -366,6 +375,69 @@ export default class ProductRepository {
       }
 
       return { status: false, msg: errorMessage };
+    }
+  }
+
+  static async listenPriceChangeOnProduct(product: Product) {
+    try {
+      const job: Job = scheduleJob(
+        `*/${product.interval} * * * * *`,
+        function () {
+          ProductRepository.runTask(product.id!, job);
+        }
+      );
+
+      return { status: true };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
+
+  static async runTask(id: number, job: Job) {
+    try {
+      const product = (await prisma.product.findFirst({
+        where: {
+          id,
+        },
+      })) as Product;
+
+      if (product.status === "PAUSED") {
+        job.cancel();
+        return;
+      }
+
+      const res = await ProductRepository.getProductPrice({
+        link: product.link,
+        store: product.store,
+      });
+
+      if (res.status) {
+        const snapshot: Snapshot = {
+          price: res.data!.price,
+          productId: product.id!,
+        };
+
+        await SnapshotRepository.addSnapshot({ snapshot });
+
+        if (res.data!.price < product.orderedPrice) {
+          EmailService.sendProductPriceUpdateEmail({
+            productLink: product.link,
+            productName: product.name,
+            storeName: Utils.capitalize({ text: product.store }),
+            message: EmailService.generateProductUpdateEmailMessage({
+              currentPrice: res.data!.price,
+              orderedPrice: product.orderedPrice,
+            }),
+            toEmail: "mohamedsfn20@gmail.com",
+          });
+        }
+      }
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientValidationError) {
+        job.cancel();
+      }
+
+      throw e;
     }
   }
 }

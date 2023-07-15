@@ -12,10 +12,10 @@ type FormValues = {
 export default class AddProductFormController {
   static async addProduct({ data }: { data: FormValues }) {
     try {
-      const res = await axios.post(ADD_PRODUCT_ENDPOINT, data);
+      const addProductRes = await axios.post(ADD_PRODUCT_ENDPOINT, data);
 
-      if (res.data.status === false) {
-        throw new Error(res.data.msg);
+      if (addProductRes.data.status === false) {
+        throw new Error(addProductRes.data.msg);
       }
 
       toast.success("Product Added");

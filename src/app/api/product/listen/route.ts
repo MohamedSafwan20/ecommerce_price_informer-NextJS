@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { Job, scheduleJob } from "node-schedule";
 import { Product } from "../../../../data/models/product_model";
@@ -41,41 +42,49 @@ export async function POST(request: Request) {
 }
 
 async function runTask(id: number, job: Job) {
-  const product = (await prisma.product.findFirst({
-    where: {
-      id,
-    },
-  })) as Product;
+  try {
+    const product = (await prisma.product.findFirst({
+      where: {
+        id,
+      },
+    })) as Product;
 
-  if (product.status === "PAUSED") {
-    job.cancel();
-    return;
-  }
-
-  const res = await ProductRepository.getProductPrice({
-    link: product.link,
-    store: product.store,
-  });
-
-  if (res.status) {
-    const snapshot: Snapshot = {
-      price: res.data!.price,
-      productId: product.id!,
-    };
-
-    await SnapshotRepository.addSnapshot({ snapshot });
-
-    if (res.data!.price < product.orderedPrice) {
-      EmailService.sendProductPriceUpdateEmail({
-        productLink: product.link,
-        productName: product.name,
-        storeName: Utils.capitalize({ text: product.store }),
-        message: EmailService.generateProductUpdateEmailMessage({
-          currentPrice: res.data!.price,
-          orderedPrice: product.orderedPrice,
-        }),
-        toEmail: "mohamedsfn20@gmail.com",
-      });
+    if (product.status === "PAUSED") {
+      job.cancel();
+      return;
     }
+
+    const res = await ProductRepository.getProductPrice({
+      link: product.link,
+      store: product.store,
+    });
+
+    if (res.status) {
+      const snapshot: Snapshot = {
+        price: res.data!.price,
+        productId: product.id!,
+      };
+
+      await SnapshotRepository.addSnapshot({ snapshot });
+
+      if (res.data!.price < product.orderedPrice) {
+        EmailService.sendProductPriceUpdateEmail({
+          productLink: product.link,
+          productName: product.name,
+          storeName: Utils.capitalize({ text: product.store }),
+          message: EmailService.generateProductUpdateEmailMessage({
+            currentPrice: res.data!.price,
+            orderedPrice: product.orderedPrice,
+          }),
+          toEmail: "mohamedsfn20@gmail.com",
+        });
+      }
+    }
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientValidationError) {
+      job.cancel();
+    }
+
+    throw e;
   }
 }

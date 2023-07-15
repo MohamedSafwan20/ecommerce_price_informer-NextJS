@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Utils from "@/utils/utils";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect } from "react";
 import { useProductAccordionStore } from "../../data/stores/product_accordion_store";
@@ -12,6 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./accordion";
+import { Button } from "./button";
 import { Card, CardDescription, CardHeader, CardTitle } from "./card";
 import EditProductForm from "./edit_product_form";
 import Loader from "./loader";
@@ -26,6 +27,7 @@ export default function ProductAccordion() {
     statusLoaders,
     onStatusChange,
     selectedStatus,
+    deleteProduct,
   } = useProductAccordionStore();
 
   useEffect(() => {
@@ -87,6 +89,18 @@ export default function ProductAccordion() {
                           </div>
                         </div>
                         <div className="flex justify-center items-center px-6 gap-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-auto h-auto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              deleteProduct(product);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                           <div
                             onClick={(e) => {
                               e.stopPropagation();
@@ -150,7 +164,7 @@ export default function ProductAccordion() {
                         const date = new Intl.DateTimeFormat("en-IN", {
                           dateStyle: "full",
                           timeStyle: "short",
-                        }).format(new Date(product.createdAt!));
+                        }).format(new Date(snapshot.time!));
 
                         const formattedDate = date.replace(" at", "");
                         return (

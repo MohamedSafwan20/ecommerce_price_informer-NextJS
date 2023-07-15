@@ -1,6 +1,7 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
+  DELETE_PRODUCT_ENDPOINT,
   GET_ALL_PRODUCTS_ENDPOINT,
   PRODUCT_LISTEN_ENDPOINT,
   UPDATE_PRODUCT_ENDPOINT,
@@ -66,6 +67,30 @@ export default class ProductAccordionController {
       if (res.data.status === false) {
         throw new Error(res.data.msg);
       }
+
+      return { status: true };
+    } catch (e: any) {
+      toast.error(e.message);
+
+      return { status: false };
+    }
+  }
+
+  static async deleteProduct(product: Product) {
+    try {
+      const payload = {
+        id: product.id,
+      };
+
+      const res = await axios.delete(DELETE_PRODUCT_ENDPOINT, {
+        data: payload,
+      });
+
+      if (res.data.status === false) {
+        throw new Error(res.data.msg);
+      }
+
+      toast.success("Product deleted");
 
       return { status: true };
     } catch (e: any) {

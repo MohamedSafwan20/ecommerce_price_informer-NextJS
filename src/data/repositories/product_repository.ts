@@ -348,4 +348,24 @@ export default class ProductRepository {
       return { status: false, msg: errorMessage };
     }
   }
+
+  static async deleteProduct(id: number) {
+    try {
+      await prisma.product.delete({
+        where: {
+          id,
+        },
+      });
+
+      return { status: true };
+    } catch (e: any) {
+      let errorMessage = e.message;
+
+      if (e instanceof Prisma.PrismaClientValidationError) {
+        errorMessage = "Invalid product id";
+      }
+
+      return { status: false, msg: errorMessage };
+    }
+  }
 }

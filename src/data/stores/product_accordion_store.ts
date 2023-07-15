@@ -19,6 +19,7 @@ interface ProductAccordionState {
     index: number;
   }) => void;
   onStatusChange: (value: string) => void;
+  deleteProduct: (product: Product) => void;
 }
 
 export const useProductAccordionStore = create<ProductAccordionState>()(
@@ -114,6 +115,21 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
       }
 
       get().fetchProducts(value as Status);
+    },
+    deleteProduct: async (product: Product) => {
+      const res = await ProductAccordionController.deleteProduct(product);
+
+      if (res.status === false) {
+        return;
+      }
+
+      const newProducts = get().products.filter((item) => {
+        return item.id !== product.id;
+      });
+
+      set({
+        products: newProducts,
+      });
     },
   })
 );

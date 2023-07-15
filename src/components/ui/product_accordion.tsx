@@ -35,13 +35,17 @@ export default function ProductAccordion() {
   }, [init]);
 
   return (
-    <Tabs defaultValue="ALL" className="w-full" onValueChange={onStatusChange}>
-      <TabsList className="ml-28">
-        <TabsTrigger value="ALL">All</TabsTrigger>
-        <TabsTrigger value="RUNNING">Running</TabsTrigger>
-        <TabsTrigger value="PAUSED">Paused</TabsTrigger>
-      </TabsList>
-      <div className="w-[75%] mx-auto pr-4 h-[60vh] overflow-y-auto">
+    <div className="w-full md:w-[75%] mx-auto pr-4 h-[60vh] overflow-y-auto">
+      <Tabs
+        defaultValue="ALL"
+        className="w-full"
+        onValueChange={onStatusChange}
+      >
+        <TabsList>
+          <TabsTrigger value="ALL">All</TabsTrigger>
+          <TabsTrigger value="RUNNING">Running</TabsTrigger>
+          <TabsTrigger value="PAUSED">Paused</TabsTrigger>
+        </TabsList>
         <TabsContent value={selectedStatus}>
           {isLoading ? (
             <ProductAccordionSkeleton />
@@ -51,7 +55,7 @@ export default function ProductAccordion() {
                 return (
                   <AccordionItem value={`item-${index}`} key={product.id}>
                     <AccordionTrigger>
-                      <div className="flex justify-between items-center w-full">
+                      <div className="md:flex justify-between items-center w-full space-y-2 md:space-y-0">
                         <div className="flex justify-center gap-6">
                           <Image
                             src={product.imageUrl}
@@ -65,7 +69,7 @@ export default function ProductAccordion() {
                             className="w-[90px] h-[70px] rounded"
                           />
                           <div>
-                            <h5 className="text-start max-w-[50ch] overflow-hidden">
+                            <h5 className="text-start max-w-[25ch] md:max-w-[50ch] overflow-hidden">
                               {product.name}
                             </h5>
                             <div className="flex gap-3 text-[0.7em] text-secondary-foreground">
@@ -88,7 +92,7 @@ export default function ProductAccordion() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex justify-center items-center px-6 gap-4">
+                        <div className="flex justify-center items-center px-6 gap-4 ml-9 md:ml-0">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -179,7 +183,9 @@ export default function ProductAccordion() {
                               >
                                 ₹{snapshot.price}
                               </CardTitle>
-                              <CardDescription>{formattedDate}</CardDescription>
+                              <CardDescription className="max-w-[18ch] sm:max-w-none">
+                                {formattedDate}
+                              </CardDescription>
                             </CardHeader>
                           </Card>
                         );
@@ -191,7 +197,7 @@ export default function ProductAccordion() {
             </Accordion>
           )}
         </TabsContent>
-      </div>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 }

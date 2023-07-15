@@ -91,7 +91,10 @@ export default function AddProductForm() {
       }}
     >
       <DialogTrigger asChild>
-        <Button size="icon" className="absolute right-20 bottom-12">
+        <Button
+          size="icon"
+          className="absolute right-10 md:right-20 bottom-6 md:bottom-12 2xl:right-[10rem] 2xl:bottom-28 3xl:right-[30%]"
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>

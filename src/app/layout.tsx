@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import { Oswald } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "../components/theme_provider";
@@ -16,13 +17,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={oswald.className}>
-        <ThemeProvider attribute="class" defaultTheme="light">
-          {children}
-          <Toaster position="bottom-right" />
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={oswald.className}>
+          <ThemeProvider attribute="class" defaultTheme="light">
+            {children}
+            <Toaster position="bottom-right" />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

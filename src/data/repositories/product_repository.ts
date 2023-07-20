@@ -311,9 +311,16 @@ export default class ProductRepository {
 
   static async fetchAllProducts(status?: Status) {
     try {
+      const user = await currentUser();
+
+      if (user === null) {
+        throw new Error("Not authorized");
+      }
+
       const res = await prisma.product.findMany({
         where: {
           status,
+          userId: user.id,
         },
         include: {
           snapshots: true,

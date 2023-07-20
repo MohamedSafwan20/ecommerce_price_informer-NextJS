@@ -1,3 +1,4 @@
+import { currentUser } from "@clerk/nextjs";
 import { Prisma } from "@prisma/client";
 import { parse } from "node-html-parser";
 import { Job, scheduleJob } from "node-schedule";
@@ -211,6 +212,12 @@ export default class ProductRepository {
     orderedPrice: number;
   }) {
     try {
+      const user = await currentUser();
+
+      if (user === null) {
+        throw new Error("Not authorized");
+      }
+
       const res = await ProductRepository.getProductDetails({
         link,
         store,
@@ -228,6 +235,7 @@ export default class ProductRepository {
         interval,
         orderedPrice,
         status: "RUNNING",
+        userId: user.id,
       };
 
       const product = (await prisma.product.create({

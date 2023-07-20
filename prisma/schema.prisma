@@ -18,6 +18,7 @@ model Product {
   createdAt    DateTime   @default(now())
   snapshots    Snapshot[]
   status       String
+  userId       String
 }
 
 model Snapshot {

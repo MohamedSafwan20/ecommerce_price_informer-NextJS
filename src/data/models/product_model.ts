@@ -14,4 +14,5 @@ export interface Product {
   createdAt?: Date;
   snapshots?: [Snapshot];
   status: Status;
+  userId: string;
 }

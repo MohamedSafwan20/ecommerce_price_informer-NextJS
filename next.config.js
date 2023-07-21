@@ -1,3 +1,5 @@
+const path = require("path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -7,6 +9,18 @@ const nextConfig = {
       "rukminim2.flixcart.com",
       "m.media-amazon.com",
     ],
+  },
+  webpack: (config, { nextRuntime }) => {
+    // Undocumented property of next 12.
+    if (nextRuntime !== "nodejs") return config;
+    return {
+      ...config,
+      entry() {
+        return config.entry().then((entry) => ({
+          ...entry,
+        }));
+      },
+    };
   },
 };
 

@@ -258,7 +258,7 @@ export default class ProductRepository {
       });
 
       if (cronJobRes.status === false) {
-        throw new Error(res.msg);
+        throw new Error(cronJobRes.msg);
       }
 
       const updatePayload = {
@@ -415,6 +415,9 @@ export default class ProductRepository {
       await axios.delete(`${CRON_JOB_API_URL}/jobs/${product.cronJobId}`, {
         headers: {
           Authorization: `Bearer ${process.env.CRON_JOB_API_KEY}`,
+        },
+        validateStatus(status) {
+          return status === 200 || status === 404;
         },
       });
 

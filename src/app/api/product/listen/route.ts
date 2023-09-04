@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try {
     const { id } = (await request.json()) as Body;
 
-    const product = (await prisma.product.findFirst({
+    const product = (await prisma.product.findUnique({
       where: {
         id,
       },

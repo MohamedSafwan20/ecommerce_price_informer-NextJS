@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Utils from "@/utils/utils";
 import { Pause, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useProductAccordionStore } from "../../data/stores/product_accordion_store";
 import {
   Accordion,
@@ -40,7 +40,10 @@ export default function ProductAccordion() {
     onStatusChange,
     selectedStatus,
     deleteProduct,
+    updateState,
   } = useProductAccordionStore();
+
+  const deleteProductDialogBtn = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     init();
@@ -108,39 +111,25 @@ export default function ProductAccordion() {
                           {deleteProductLoaders[index] === true ? (
                             <Loader showLoadingText={false} size={16} />
                           ) : (
-                            <AlertDialog>
-                              <AlertDialogTrigger>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="w-auto h-auto"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Are you sure?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently stop this product&apos;s price
-                                    change listener.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => {
-                                      deleteProduct({ product, index });
-                                    }}
-                                  >
-                                    Continue
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-auto h-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateState({
+                                  state: "selectedProduct",
+                                  value: product,
+                                });
+                                updateState({
+                                  state: "selectedProductIndex",
+                                  value: index,
+                                });
+                                deleteProductDialogBtn.current?.click();
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                           <div
                             onClick={(e) => {
@@ -235,6 +224,26 @@ export default function ProductAccordion() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* delete product confirm dialog */}
+      <AlertDialog>
+        <AlertDialogTrigger ref={deleteProductDialogBtn}></AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently stop this
+              product&apos;s price change listener.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteProduct}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

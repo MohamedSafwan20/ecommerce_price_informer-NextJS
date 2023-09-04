@@ -1,4 +1,5 @@
 import { currentUser } from "@clerk/nextjs";
+import { User } from "@clerk/nextjs/dist/types/server";
 import { Prisma } from "@prisma/client";
 import axios from "axios";
 import { parse } from "node-html-parser";
@@ -255,6 +256,7 @@ export default class ProductRepository {
         hostUrl,
         interval,
         productId: product.id,
+        user,
       });
 
       if (cronJobRes.status === false) {
@@ -437,10 +439,12 @@ export default class ProductRepository {
     hostUrl,
     interval,
     productId,
+    user,
   }: {
     hostUrl: string;
     interval: number;
     productId: number;
+    user: User;
   }) {
     try {
       const intervalArray = [];
@@ -468,6 +472,7 @@ export default class ProductRepository {
           extendedData: {
             body: JSON.stringify({
               id: productId,
+              userEmail: user.emailAddresses[0].emailAddress,
             }),
           },
         },
@@ -507,7 +512,13 @@ export default class ProductRepository {
     }
   }
 
-  static async listenPriceChangeOnProduct(product: Product) {
+  static async listenPriceChangeOnProduct({
+    product,
+    userEmail,
+  }: {
+    product: Product;
+    userEmail: string;
+  }) {
     try {
       const res = await ProductRepository.getProductPrice({
         link: product.link,
@@ -523,8 +534,6 @@ export default class ProductRepository {
         await SnapshotRepository.addSnapshot({ snapshot });
 
         if (res.data!.price < product.orderedPrice) {
-          const user = await currentUser();
-
           const emailRes = await EmailService.sendProductPriceUpdateEmail({
             productLink: product.link,
             productName: product.name,
@@ -533,7 +542,7 @@ export default class ProductRepository {
               currentPrice: res.data!.price,
               orderedPrice: product.orderedPrice,
             }),
-            toEmail: user?.emailAddresses[0].emailAddress ?? "",
+            toEmail: userEmail,
           });
 
           if (emailRes.status) {

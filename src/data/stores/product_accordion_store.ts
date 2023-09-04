@@ -8,6 +8,8 @@ interface ProductAccordionState {
   statusLoaders: boolean[];
   deleteProductLoaders: boolean[];
   selectedStatus: Status | "ALL";
+  selectedProduct: Product | null;
+  selectedProductIndex: number | null;
   init: () => void;
   fetchProducts: (status?: Status) => void;
   changeProductStatus: ({
@@ -20,13 +22,8 @@ interface ProductAccordionState {
     index: number;
   }) => void;
   onStatusChange: (value: string) => void;
-  deleteProduct: ({
-    product,
-    index,
-  }: {
-    product: Product;
-    index: number;
-  }) => void;
+  deleteProduct: () => void;
+  updateState: ({ state, value }: { state: string; value: any }) => void;
 }
 
 export const useProductAccordionStore = create<ProductAccordionState>()(
@@ -36,8 +33,13 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
     statusLoaders: [],
     deleteProductLoaders: [],
     selectedStatus: "ALL",
+    selectedProduct: null,
+    selectedProductIndex: null,
     init: () => {
       get().fetchProducts();
+    },
+    updateState: ({ state, value }: { state: string; value: any }) => {
+      set({ [state]: value });
     },
     fetchProducts: async (status) => {
       set({ isLoading: true });
@@ -110,13 +112,10 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
 
       get().fetchProducts(value as Status);
     },
-    deleteProduct: async ({
-      product,
-      index,
-    }: {
-      product: Product;
-      index: number;
-    }) => {
+    deleteProduct: async () => {
+      const product = get().selectedProduct!;
+      const index = get().selectedProductIndex!;
+
       const loaders = get().deleteProductLoaders;
       loaders[index] = true;
 

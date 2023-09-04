@@ -3,4 +3,5 @@ export interface Snapshot {
   time?: Date;
   price: number;
   productId: number;
+  priceReduced: boolean;
 }

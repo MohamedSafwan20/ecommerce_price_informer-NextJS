@@ -311,6 +311,13 @@ export default class ProductRepository {
         };
       }
 
+      if (data.orderedPrice) {
+        payload = {
+          ...payload,
+          lastCheckedPrice: data.orderedPrice,
+        };
+      }
+
       const product = await prisma.product.update({
         where: {
           id,
@@ -530,14 +537,17 @@ export default class ProductRepository {
       });
 
       if (res.status) {
+        const priceReduced = res.data!.price < product.lastCheckedPrice;
+
         const snapshot: Snapshot = {
           price: res.data!.price,
           productId: product.id!,
+          priceReduced,
         };
 
         await SnapshotRepository.addSnapshot({ snapshot });
 
-        if (res.data!.price < product.orderedPrice) {
+        if (priceReduced) {
           const emailRes = await EmailService.sendProductPriceUpdateEmail({
             productLink: product.link,
             productName: product.name,

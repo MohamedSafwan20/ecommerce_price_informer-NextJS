@@ -202,7 +202,7 @@ export default function ProductAccordion() {
                             <CardHeader className="flex justify-between items-center flex-row">
                               <CardTitle
                                 className={`${
-                                  snapshot.price < product.orderedPrice
+                                  snapshot.priceReduced
                                     ? "text-success"
                                     : "text-destructive"
                                 }  text-base`}

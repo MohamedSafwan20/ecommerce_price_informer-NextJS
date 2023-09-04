@@ -77,7 +77,9 @@ export default class ProductRepository {
   }
 
   static async getAmazonProductDetails({ link }: { link: string }) {
-    const res = await fetch(link);
+    const res = await fetch(link, {
+      method: "POST",
+    });
 
     if (!res.ok) {
       throw new Error("Failed to fetch the product");
@@ -173,7 +175,9 @@ export default class ProductRepository {
   }
 
   static async getAmazonProductPrice({ link }: { link: string }) {
-    const res = await fetch(link);
+    const res = await fetch(link, {
+      method: "POST",
+    });
 
     if (!res.ok) {
       throw new Error("Failed to fetch the product");
@@ -260,6 +264,12 @@ export default class ProductRepository {
       });
 
       if (cronJobRes.status === false) {
+        await prisma.product.delete({
+          where: {
+            id: product.id,
+          },
+        });
+
         throw new Error(cronJobRes.msg);
       }
 
@@ -326,10 +336,23 @@ export default class ProductRepository {
       });
 
       if (data.status !== undefined && data.status !== null) {
-        await this.updateProductPriceListeningCronJob({
+        const res = await this.updateProductPriceListeningCronJob({
           jobId: product.cronJobId,
           enabled: data.status === "RUNNING",
         });
+
+        if (res.status === false) {
+          await prisma.product.update({
+            where: {
+              id,
+            },
+            data: {
+              status: data.status === "RUNNING" ? "PAUSED" : "RUNNING",
+            },
+          });
+
+          throw new Error(res.msg);
+        }
       }
 
       return { status: true };
@@ -419,11 +442,11 @@ export default class ProductRepository {
 
   static async deleteProduct(id: number) {
     try {
-      const product = await prisma.product.delete({
+      const product = (await prisma.product.findUnique({
         where: {
           id,
         },
-      });
+      })) as Product;
 
       await axios.delete(`${CRON_JOB_API_URL}/jobs/${product.cronJobId}`, {
         headers: {
@@ -431,6 +454,12 @@ export default class ProductRepository {
         },
         validateStatus(status) {
           return status === 200 || status === 404;
+        },
+      });
+
+      await prisma.product.delete({
+        where: {
+          id,
         },
       });
 

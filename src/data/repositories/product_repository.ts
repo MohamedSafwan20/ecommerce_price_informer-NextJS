@@ -356,7 +356,11 @@ export default class ProductRepository {
           userId: user.id,
         },
         include: {
-          snapshots: true,
+          snapshots: {
+            orderBy: {
+              time: "desc",
+            },
+          },
         },
       });
 

@@ -16,4 +16,5 @@ export interface Product {
   status: Status;
   userId: string;
   cronJobId: number;
+  lastCheckedPrice: number;
 }

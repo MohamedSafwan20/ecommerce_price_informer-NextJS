@@ -109,7 +109,7 @@ export default function AddProductForm() {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => addProduct(data))}>
+          <form onSubmit={form.handleSubmit((data) => addProduct(data, form))}>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}

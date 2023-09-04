@@ -6,6 +6,7 @@ interface ProductAccordionState {
   products: Product[];
   isLoading: boolean;
   statusLoaders: boolean[];
+  deleteProductLoaders: boolean[];
   selectedStatus: Status | "ALL";
   init: () => void;
   fetchProducts: (status?: Status) => void;
@@ -19,7 +20,13 @@ interface ProductAccordionState {
     index: number;
   }) => void;
   onStatusChange: (value: string) => void;
-  deleteProduct: (product: Product) => void;
+  deleteProduct: ({
+    product,
+    index,
+  }: {
+    product: Product;
+    index: number;
+  }) => void;
 }
 
 export const useProductAccordionStore = create<ProductAccordionState>()(
@@ -27,6 +34,7 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
     products: [],
     isLoading: false,
     statusLoaders: [],
+    deleteProductLoaders: [],
     selectedStatus: "ALL",
     init: () => {
       get().fetchProducts();
@@ -58,31 +66,20 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
         statusLoaders: loaders,
       });
 
-      if (status === "RUNNING") {
-        const changeRes = await ProductAccordionController.changeProductStatus({
-          status,
-          product,
-        });
-
-        if (changeRes.status === false) {
-          return;
-        }
-      } else {
-        const res = await ProductAccordionController.changeProductStatus({
-          status,
-          product,
-        });
-
-        if (res.status === false) {
-          return;
-        }
-      }
+      let res = await ProductAccordionController.changeProductStatus({
+        status,
+        product,
+      });
 
       loaders[index] = false;
 
       set({
         statusLoaders: loaders,
       });
+
+      if (res.status === false) {
+        return;
+      }
 
       const newProducts = get().products.map((value) => {
         if (value.id === product.id) {
@@ -113,8 +110,27 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
 
       get().fetchProducts(value as Status);
     },
-    deleteProduct: async (product: Product) => {
+    deleteProduct: async ({
+      product,
+      index,
+    }: {
+      product: Product;
+      index: number;
+    }) => {
+      const loaders = get().deleteProductLoaders;
+      loaders[index] = true;
+
+      set({
+        deleteProductLoaders: loaders,
+      });
+
       const res = await ProductAccordionController.deleteProduct(product);
+
+      loaders[index] = false;
+
+      set({
+        deleteProductLoaders: loaders,
+      });
 
       if (res.status === false) {
         return;

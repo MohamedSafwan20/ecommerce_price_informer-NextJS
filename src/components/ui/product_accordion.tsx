@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Utils from "@/utils/utils";
 import { Pause, Play, Trash2 } from "lucide-react";
@@ -25,6 +36,7 @@ export default function ProductAccordion() {
     isLoading,
     changeProductStatus,
     statusLoaders,
+    deleteProductLoaders,
     onStatusChange,
     selectedStatus,
     deleteProduct,
@@ -79,7 +91,7 @@ export default function ProductAccordion() {
                               </div>
                               <div className="flex items-start flex-col">
                                 <span>Interval</span>
-                                <span>{product.interval}S</span>
+                                <span>{product.interval}M</span>
                               </div>
                               <div className="flex items-start flex-col">
                                 <span>Store</span>
@@ -93,18 +105,43 @@ export default function ProductAccordion() {
                           </div>
                         </div>
                         <div className="flex justify-center items-center px-6 gap-4 ml-9 md:ml-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="w-auto h-auto"
-                            onClick={(e) => {
-                              e.stopPropagation();
-
-                              deleteProduct(product);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {deleteProductLoaders[index] === true ? (
+                            <Loader showLoadingText={false} size={16} />
+                          ) : (
+                            <AlertDialog>
+                              <AlertDialogTrigger>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="w-auto h-auto"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Are you sure?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will
+                                    permanently stop this product&apos;s price
+                                    change listener.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => {
+                                      deleteProduct({ product, index });
+                                    }}
+                                  >
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                           <div
                             onClick={(e) => {
                               e.stopPropagation();

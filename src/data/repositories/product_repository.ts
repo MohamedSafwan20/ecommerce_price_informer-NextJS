@@ -244,6 +244,7 @@ export default class ProductRepository {
         status: "RUNNING",
         userId: user.id,
         cronJobId: 0,
+        lastCheckedPrice: orderedPrice,
       };
 
       const product = await prisma.product.create({
@@ -405,9 +406,15 @@ export default class ProductRepository {
 
   static async deleteProduct(id: number) {
     try {
-      await prisma.product.delete({
+      const product = await prisma.product.delete({
         where: {
           id,
+        },
+      });
+
+      await axios.delete(`${CRON_JOB_API_URL}/jobs/${product.cronJobId}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_JOB_API_KEY}`,
         },
       });
 
@@ -499,22 +506,6 @@ export default class ProductRepository {
 
   static async listenPriceChangeOnProduct(product: Product) {
     try {
-      await ProductRepository.runTask(product.id!);
-
-      return { status: true };
-    } catch (e: any) {
-      return { status: false, msg: e.message };
-    }
-  }
-
-  static async runTask(id: number) {
-    try {
-      const product = (await prisma.product.findFirst({
-        where: {
-          id,
-        },
-      })) as Product;
-
       const res = await ProductRepository.getProductPrice({
         link: product.link,
         store: product.store,
@@ -531,7 +522,7 @@ export default class ProductRepository {
         if (res.data!.price < product.orderedPrice) {
           const user = await currentUser();
 
-          EmailService.sendProductPriceUpdateEmail({
+          const emailRes = await EmailService.sendProductPriceUpdateEmail({
             productLink: product.link,
             productName: product.name,
             storeName: Utils.capitalize({ text: product.store }),
@@ -541,10 +532,23 @@ export default class ProductRepository {
             }),
             toEmail: user?.emailAddresses[0].emailAddress ?? "",
           });
+
+          if (emailRes.status) {
+            await prisma.product.update({
+              where: {
+                id: product.id,
+              },
+              data: {
+                lastCheckedPrice: res.data!.price,
+              },
+            });
+          }
         }
       }
-    } catch (e) {
-      throw e;
+
+      return { status: true };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
     }
   }
 }

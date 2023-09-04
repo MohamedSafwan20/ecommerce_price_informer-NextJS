@@ -59,13 +59,10 @@ export const useProductAccordionStore = create<ProductAccordionState>()(
       });
 
       if (status === "RUNNING") {
-        const [changeRes] = await Promise.all([
-          ProductAccordionController.changeProductStatus({
-            status,
-            product,
-          }),
-          ProductAccordionController.listenPriceChangeOnProduct(product),
-        ]);
+        const changeRes = await ProductAccordionController.changeProductStatus({
+          status,
+          product,
+        });
 
         if (changeRes.status === false) {
           return;

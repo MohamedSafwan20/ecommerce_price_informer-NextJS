@@ -15,4 +15,5 @@ export interface Product {
   snapshots?: [Snapshot];
   status: Status;
   userId: string;
+  cronJobId: number;
 }

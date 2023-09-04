@@ -23,8 +23,8 @@ export const useAddProductFormStore = create<AddProductFormState>()(
     formValues: {
       link: "",
       store: "",
-      interval: 30,
-      orderedPrice: NaN,
+      interval: 1,
+      orderedPrice: 0,
     },
     isDialogOpen: false,
     isLoading: false,
@@ -33,18 +33,13 @@ export const useAddProductFormStore = create<AddProductFormState>()(
     },
     addProduct: async (data) => {
       set({ isLoading: true });
-
       const res = await AddProductFormController.addProduct({
         data,
       });
-
       set({ isLoading: false });
-
       if (res.status) {
         useProductAccordionStore.getState().fetchProducts();
-
         set({ isDialogOpen: false });
-
         get().resetFormValues();
       }
     },

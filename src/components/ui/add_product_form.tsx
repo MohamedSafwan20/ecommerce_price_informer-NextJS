@@ -54,11 +54,14 @@ const formSchema = z.object({
   interval: z.coerce
     .number()
     .int()
+    .gte(1, {
+      message: "Interval must be greater than or equal to 1",
+    })
     .min(1, {
       message: "Interval is Required",
     })
-    .gte(0, {
-      message: "Invalid interval",
+    .lte(59, {
+      message: "Interval must be less than or equal to 59",
     }),
   orderedPrice: z.coerce
     .number()
@@ -156,9 +159,14 @@ export default function AddProductForm() {
                 name="interval"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>Interval(Seconds)</FormLabel>
+                    <FormLabel>Interval(minutes)</FormLabel>
                     <FormControl>
-                      <Input type="number" required {...field} />
+                      <Input
+                        type="number"
+                        required
+                        {...field}
+                        placeholder="1-59"
+                      />
                     </FormControl>
                     <FormMessage className="font-normal text-xs" />
                   </FormItem>

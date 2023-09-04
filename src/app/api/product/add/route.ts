@@ -12,7 +12,9 @@ type Body = {
 export async function POST(request: Request) {
   const body = (await request.json()) as Body;
 
-  const res = await ProductRepository.addProduct(body);
+  const hostUrl = request.headers.get("host") ?? "";
+
+  const res = await ProductRepository.addProduct(body, hostUrl);
 
   return NextResponse.json(res);
 }

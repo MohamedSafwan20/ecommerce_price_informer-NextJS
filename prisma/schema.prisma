@@ -4,9 +4,9 @@ generator client {
 
 datasource db {
   provider          = "postgresql"
-  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
+  url               = env("POSTGRES_PRISMA_URL")
+  directUrl         = env("POSTGRES_URL_NON_POOLING")
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Product {
@@ -18,15 +18,16 @@ model Product {
   interval     Int
   orderedPrice Int
   createdAt    DateTime   @default(now())
-  snapshots    Snapshot[]
   status       String
   userId       String
+  snapshots    Snapshot[]
+  cronJobId    Int
 }
 
 model Snapshot {
   id        Int      @id @default(autoincrement())
   time      DateTime @default(now())
   price     Int
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

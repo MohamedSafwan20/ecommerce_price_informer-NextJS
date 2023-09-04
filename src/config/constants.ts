@@ -10,3 +10,4 @@ export const UPDATE_PRODUCT_ENDPOINT = "/api/product/update";
 export const GET_PRODUCT_ENDPOINT = "/api/product";
 export const PRODUCT_LISTEN_ENDPOINT = "/api/product/listen";
 export const DELETE_PRODUCT_ENDPOINT = "/api/product/delete";
+export const CRON_JOB_API_URL = "https://api.cron-job.org";

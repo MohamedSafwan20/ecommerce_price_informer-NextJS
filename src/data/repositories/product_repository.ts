@@ -1,9 +1,13 @@
 import { currentUser } from "@clerk/nextjs";
 import { Prisma } from "@prisma/client";
+import axios from "axios";
 import { parse } from "node-html-parser";
-import { Job, scheduleJob } from "node-schedule";
 import { prisma } from "../../app/api/_base";
-import { AJIO_PRODUCT_ENDPOINT } from "../../config/constants";
+import {
+  AJIO_PRODUCT_ENDPOINT,
+  CRON_JOB_API_URL,
+  PRODUCT_LISTEN_ENDPOINT,
+} from "../../config/constants";
 import Utils from "../../utils/utils";
 import { Product, Status, Store } from "../models/product_model";
 import { Snapshot } from "../models/snapshot_model";
@@ -200,17 +204,20 @@ export default class ProductRepository {
     return currencyString.replace("Rs. ", "");
   }
 
-  static async addProduct({
-    link,
-    store,
-    interval,
-    orderedPrice,
-  }: {
-    link: string;
-    store: Store;
-    interval: number;
-    orderedPrice: number;
-  }) {
+  static async addProduct(
+    {
+      link,
+      store,
+      interval,
+      orderedPrice,
+    }: {
+      link: string;
+      store: Store;
+      interval: number;
+      orderedPrice: number;
+    },
+    hostUrl: string
+  ) {
     try {
       const user = await currentUser();
 
@@ -236,17 +243,33 @@ export default class ProductRepository {
         orderedPrice,
         status: "RUNNING",
         userId: user.id,
+        cronJobId: 0,
       };
 
-      const product = (await prisma.product.create({
+      const product = await prisma.product.create({
         data: payload,
-      })) as Product;
+      });
 
-      const listenProductRes = await this.listenPriceChangeOnProduct(product);
+      const cronJobRes = await this.createProductPriceListeningCronJob({
+        hostUrl,
+        interval,
+        productId: product.id,
+      });
 
-      if (listenProductRes.status === false) {
+      if (cronJobRes.status === false) {
         throw new Error(res.msg);
       }
+
+      const updatePayload = {
+        cronJobId: cronJobRes.data.jobId,
+      };
+
+      await prisma.product.update({
+        where: {
+          id: product.id,
+        },
+        data: updatePayload,
+      });
 
       return { status: true };
     } catch (e: any) {
@@ -285,12 +308,19 @@ export default class ProductRepository {
         };
       }
 
-      await prisma.product.update({
+      const product = await prisma.product.update({
         where: {
           id,
         },
         data: payload,
       });
+
+      if (data.status !== undefined && data.status !== null) {
+        await this.updateProductPriceListeningCronJob({
+          jobId: product.cronJobId,
+          enabled: data.status === "RUNNING",
+        });
+      }
 
       return { status: true };
     } catch (e: any) {
@@ -393,14 +423,73 @@ export default class ProductRepository {
     }
   }
 
-  static async listenPriceChangeOnProduct(product: Product) {
+  static async createProductPriceListeningCronJob({
+    hostUrl,
+    interval,
+    productId,
+  }: {
+    hostUrl: string;
+    interval: number;
+    productId: number;
+  }) {
     try {
-      const job: Job = scheduleJob(
-        `*/${product.interval} * * * * *`,
-        function () {
-          ProductRepository.runTask(product.id!, job);
-        }
-      );
+      const intervalArray = [];
+      for (let i = 0; i <= 59; i += interval) {
+        intervalArray.push(i);
+      }
+
+      const payload = {
+        job: {
+          url: `${
+            process.env.NODE_ENV === "development" ? "http" : "https"
+          }://${hostUrl}${PRODUCT_LISTEN_ENDPOINT}`,
+          enabled: "true",
+          saveResponses: true,
+          schedule: {
+            timezone: "Asia/Kolkata",
+            expiresAt: 0,
+            hours: [-1],
+            mdays: [-1],
+            minutes: intervalArray,
+            months: [-1],
+            wdays: [-1],
+          },
+          requestMethod: 1,
+          extendedData: {
+            body: JSON.stringify({
+              id: productId,
+            }),
+          },
+        },
+      };
+
+      const res = await axios.put(`${CRON_JOB_API_URL}/jobs`, payload, {
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_JOB_API_KEY}`,
+        },
+      });
+
+      return { status: true, data: res.data };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
+
+  static async updateProductPriceListeningCronJob({
+    jobId,
+    enabled,
+  }: {
+    jobId: number;
+    enabled: boolean;
+  }) {
+    try {
+      const payload = { job: { enabled } };
+
+      await axios.patch(`${CRON_JOB_API_URL}/jobs/${jobId}`, payload, {
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_JOB_API_KEY}`,
+        },
+      });
 
       return { status: true };
     } catch (e: any) {
@@ -408,18 +497,23 @@ export default class ProductRepository {
     }
   }
 
-  static async runTask(id: number, job: Job) {
+  static async listenPriceChangeOnProduct(product: Product) {
+    try {
+      await ProductRepository.runTask(product.id!);
+
+      return { status: true };
+    } catch (e: any) {
+      return { status: false, msg: e.message };
+    }
+  }
+
+  static async runTask(id: number) {
     try {
       const product = (await prisma.product.findFirst({
         where: {
           id,
         },
       })) as Product;
-
-      if (product.status === "PAUSED") {
-        job.cancel();
-        return;
-      }
 
       const res = await ProductRepository.getProductPrice({
         link: product.link,
@@ -435,6 +529,8 @@ export default class ProductRepository {
         await SnapshotRepository.addSnapshot({ snapshot });
 
         if (res.data!.price < product.orderedPrice) {
+          const user = await currentUser();
+
           EmailService.sendProductPriceUpdateEmail({
             productLink: product.link,
             productName: product.name,
@@ -443,15 +539,11 @@ export default class ProductRepository {
               currentPrice: res.data!.price,
               orderedPrice: product.orderedPrice,
             }),
-            toEmail: "mohamedsfn20@gmail.com",
+            toEmail: user?.emailAddresses[0].emailAddress ?? "",
           });
         }
       }
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientValidationError) {
-        job.cancel();
-      }
-
       throw e;
     }
   }

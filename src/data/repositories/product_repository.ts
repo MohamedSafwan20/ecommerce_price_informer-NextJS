@@ -57,15 +57,9 @@ export default class ProductRepository {
   }
 
   static async getFlipkartProductDetails({ link }: { link: string }) {
-    const res = await fetch(link);
+    const res = await axios.get(link);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch the product");
-    }
-
-    const html = await res.text();
-
-    const root = parse(html);
+    const root = parse(res.data);
 
     const name = root.querySelector(".B_NuCI")?.textContent ?? "";
     const imageUrl =
@@ -77,22 +71,9 @@ export default class ProductRepository {
   }
 
   static async getAmazonProductDetails({ link }: { link: string }) {
-    const res = await fetch(link, {
-      method: "POST",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36",
-        "Accept-Language": "en-US, en;q=0.5",
-      },
-    });
+    const res = await axios.get(link);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch the product");
-    }
-
-    const html = await res.text();
-
-    const root = parse(html);
+    const root = parse(res.data);
 
     const name = root.querySelector("#productTitle")?.textContent ?? "";
     const imageUrl =
@@ -104,13 +85,9 @@ export default class ProductRepository {
   static async getAjioProductDetails({ link }: { link: string }) {
     const productId = link.split("/").pop()!.split("?")[0];
 
-    const res = await fetch(`${AJIO_PRODUCT_ENDPOINT}/${productId}`);
+    const res = await axios.get(`${AJIO_PRODUCT_ENDPOINT}/${productId}`);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch the product");
-    }
-
-    const data = await res.json();
+    const data = res.data;
 
     const name = data.baseOptions[0].options[0].modelImage.altText ?? "";
     const imageUrl = data.baseOptions[0].options[0].modelImage.url ?? "";
@@ -163,15 +140,9 @@ export default class ProductRepository {
   }
 
   static async getFlipkartProductPrice({ link }: { link: string }) {
-    const res = await fetch(link);
+    const res = await axios.get(link);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch the product");
-    }
-
-    const html = await res.text();
-
-    const root = parse(html);
+    const root = parse(res.data);
 
     const currencyString =
       root.querySelector("._30jeq3._16Jk6d")?.textContent ?? "";
@@ -180,22 +151,9 @@ export default class ProductRepository {
   }
 
   static async getAmazonProductPrice({ link }: { link: string }) {
-    const res = await fetch(link, {
-      method: "POST",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36",
-        "Accept-Language": "en-US, en;q=0.5",
-      },
-    });
+    const res = await axios.get(link);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch the product");
-    }
-
-    const html = await res.text();
-
-    const root = parse(html);
+    const root = parse(res.data);
 
     const currencyString =
       root.querySelector(".a-price-whole")?.textContent ?? "";
@@ -206,13 +164,9 @@ export default class ProductRepository {
   static async getAjioProductPrice({ link }: { link: string }) {
     const productId = link.split("/").pop()!.split("?")[0];
 
-    const res = await fetch(`${AJIO_PRODUCT_ENDPOINT}/${productId}`);
+    const res = await axios.get(`${AJIO_PRODUCT_ENDPOINT}/${productId}`);
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch the product");
-    }
-
-    const data = await res.json();
+    const data = res.data;
 
     const currencyString = data.price.displayformattedValue ?? "";
 
